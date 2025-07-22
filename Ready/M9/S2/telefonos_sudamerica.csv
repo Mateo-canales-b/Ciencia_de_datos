@@ -1,0 +1,11 @@
+pais,modelo,marca,precio,memoria_ram,capacidad_bateria,edad_comprador,fecha_venta
+Argentina,Galaxy S21,Samsung,1000,8,4000,30,2023-01-15
+Brasil,iPhone 13,Apple,1200,6,3500,25,2023-02-10
+Chile,Xiaomi Mi 11,Xiaomi,800,6,4500,28,2023-03-05
+Brasil,Galaxy A72,Samsung,700,6,5000,22,2023-02-12
+Peru,Redmi Note 10,Xiaomi,350,4,4000,34,2023-01-20
+Colombia,iPhone 12,Apple,950,6,3500,27,2023-02-18
+Brasil,Motorola Edge,Motorola,750,8,5000,31,2023-01-25
+Argentina,Samsung A52,Samsung,500,4,4000,23,2023-03-01
+Chile,Poco X3 Pro,Xiaomi,400,6,5100,26,2023-03-07
+Peru,Galaxy S21,Samsung,1100,8,4500,33,2023-02-22
