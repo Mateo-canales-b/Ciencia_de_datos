@@ -153,7 +153,7 @@ def main():
     # Si el notebook está en M*/S*, para llegar a la raíz sube 2 niveles: ../..
     rel_to_root = "../.."
 
-    title = f"Pres S{S} M{M} — {datetime.now().strftime('%d/%m/%Y')}"
+    title = f"Actividad S{S} M{M} — {datetime.now().strftime('%d/%m/%Y')}"
     nb = make_nb_json(title, rel_to_root=rel_to_root, mode=mode_in)
 
     with open(nb_path, "w", encoding="utf-8") as f:
