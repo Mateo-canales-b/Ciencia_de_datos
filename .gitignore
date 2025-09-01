@@ -24,3 +24,15 @@
 *base.pdf
 # NO ignores el PDF (queremos incluirlo en Git)
 # *.pdf ← NO lo pongas
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Archivos de entorno
+.env
+.venv
+*.egg-info/
