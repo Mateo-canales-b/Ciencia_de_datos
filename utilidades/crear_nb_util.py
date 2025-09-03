@@ -10,7 +10,7 @@ Uso:
   - Ejecuta el script (doble clic si tu OS lo permite, o por terminal).
   - Ingresa el módulo (ej: 8 o M8).
   - Ingresa la sesión (ej: 5 o S5).
-  - (Opcional) Ingresa el nombre de archivo o deja vacío para usar el formato "Pres s{sesion}m{modulo}.ipynb".
+  - (Opcional) Ingresa el nombre de archivo o deja vacío para usar el formato "Actividad_s{sesion}m{modulo}.ipynb".
 """
 
 import os
@@ -125,7 +125,7 @@ def main():
         location_in = "2"
     mod_in = input("Módulo (ej: 8 o M8): ").strip()
     ses_in = input("Sesión (ej: 5 o S5): ").strip()
-    fname_in = input("Nombre de archivo (opcional, ej: Pres s5m8.ipynb): ").strip()
+    fname_in = input("Nombre de archivo (opcional, ej: Actividad_s5m8.ipynb): ").strip()
     mode_in = input("Modo de imports: 1) utilidades.tools (recomendado)  2) imports directos en el notebook [1/2]: ").strip() or "1"
     if mode_in not in {"1", "2"}:
         print("Opción inválida, usando modo 1 por defecto.")
@@ -146,8 +146,8 @@ def main():
             fname_in += ".ipynb"
         nb_path = target_dir / fname_in
     else:
-        # Formato por defecto similar a tu ejemplo: "Pres s5m8.ipynb"
-        nb_path = target_dir / f"Pres s{S}m{M}.ipynb"
+        # Formato por defecto similar a tu ejemplo: "Actividad_s5m8.ipynb"
+        nb_path = target_dir / f"Actividad_s{S}m{M}.ipynb"
 
     # Calcular ruta relativa desde el notebook hacia la raíz del proyecto
     # Si el notebook está en M*/S*, para llegar a la raíz sube 2 niveles: ../..

@@ -20,7 +20,7 @@ from statsmodels.tsa.stattools import acf
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, roc_auc_score, roc_curve, precision_recall_fscore_support, accuracy_score, confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV, TimeSeriesSplit, StratifiedKFold
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler, PowerTransformer, QuantileTransformer, OneHotEncoder, PolynomialFeatures
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -42,3 +42,47 @@ pd.set_option('display.width', 120)
 
 sns.set_theme()
 warnings.filterwarnings("ignore")
+
+# Spark (PySpark)
+import pyspark
+from pyspark.sql import SparkSession, functions as F, types as T, Window as W
+from pyspark.ml import Pipeline as SparkPipeline
+from pyspark.ml.feature import (
+    VectorAssembler,
+    StringIndexer,
+    OneHotEncoder as SparkOneHotEncoder,
+    StandardScaler as SparkStandardScaler,
+    MinMaxScaler as SparkMinMaxScaler,
+    Imputer as SparkImputer,
+)
+from pyspark.ml.evaluation import (
+    BinaryClassificationEvaluator,
+    MulticlassClassificationEvaluator,
+    RegressionEvaluator,
+)
+from pyspark.ml.classification import (
+    LogisticRegression as SparkLogisticRegression,
+    RandomForestClassifier as SparkRandomForestClassifier,
+    GBTClassifier as SparkGBTClassifier,
+)
+from pyspark.ml.regression import (
+    RandomForestRegressor as SparkRandomForestRegressor,
+    GBTRegressor as SparkGBTRegressor,
+)
+
+def get_spark(app_name: str = "CienciaDeDatos", local_cores: str = "*") -> SparkSession:
+    """Crear o recuperar una SparkSession local con nivel de log reducido.
+
+    Parameters
+    ----------
+    app_name : nombre de la aplicación a mostrar en Spark UI
+    local_cores : número de cores locales ("*" usa todos)
+    """
+    spark = (
+        SparkSession.builder
+        .master(f"local[{local_cores}]")
+        .appName(app_name)
+        .getOrCreate()
+    )
+    spark.sparkContext.setLogLevel("WARN")
+    return spark
