@@ -1,0 +1,4 @@
+pais  , modelo       , marca   , precio, memoria_ram, capacidad_bateria, edad_comprador, fecha_venta
+Brasil, iPhone 13    , Apple   ,   1200,           6,              3500,             25, 2023-02-10
+Brasil, Galaxy A72   , Samsung ,    700,           6,              5000,             22, 2023-02-12
+Brasil, Motorola Edge, Motorola,    750,           8,              5000,             31, 2023-01-25
