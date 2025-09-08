@@ -45,6 +45,7 @@ warnings.filterwarnings("ignore")
 
 # Spark (PySpark)
 import pyspark
+from pyspark import SparkContext
 from pyspark.sql import SparkSession, functions as F, types as T, Window as W
 from pyspark.ml import Pipeline as SparkPipeline
 from pyspark.ml.feature import (
