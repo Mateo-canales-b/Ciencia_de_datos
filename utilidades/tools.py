@@ -3,6 +3,7 @@
 # Manejo de datos
 import pandas as pd
 import numpy as np
+from tabulate import tabulate
 
 # Visualización
 import matplotlib.pyplot as plt
@@ -87,3 +88,28 @@ def get_spark(app_name: str = "CienciaDeDatos", local_cores: str = "*") -> Spark
     )
     spark.sparkContext.setLogLevel("WARN")
     return spark
+def tabla(dfx, fmt='fancy_grid', decimals=2, title=None):
+    """
+    Muestra un DataFrame o Series en formato tabulado con título opcional.
+    
+    Parámetros:
+    dfx : DataFrame o Series
+    fmt : str, formato de tabulate (default: 'fancy_grid')
+    decimals : int, número de decimales (default: 2)
+    title : str, título de la tabla (default: None)
+    """
+    # Si es Series → convertir a DataFrame
+    if isinstance(dfx, pd.Series):
+        dfx = dfx.to_frame(name="Valor")
+
+    # Redondear si son datos numéricos
+    try:
+        dfx = dfx.round(decimals)
+    except:
+        pass  # ignora si no aplica
+
+    # Imprimir título si existe
+    if title:
+        print(f"\n {title}\n" + "-" * (len(title) + 2))
+
+    print(tabulate(dfx, headers="keys", tablefmt=fmt))
