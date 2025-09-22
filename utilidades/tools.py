@@ -11,7 +11,7 @@ import seaborn as sns
 
 # Estadística y análisis de series temporales
 from scipy import stats
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, ttest_ind, t
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from statsmodels.graphics.tsaplots import plot_acf
