@@ -25,6 +25,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Ma
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
 
 # Deep Learning con TensorFlow/Keras
 import tensorflow as tf
@@ -344,3 +347,228 @@ def triple_plot(df, col, *, n=0, bins='sturges', alpha=0.05, whis=(5,95), showfl
     fig.suptitle(f"Distribución de '{col}'", fontsize=14, weight='bold', y=1.05)
     plt.tight_layout()
     plt.show()
+
+
+
+def elbow_auto_plot(X, k_min=2, k_cap=10, scale=True, scaler="standard", 
+                    method="absolute", palette=None, seed=42, show=True):
+    """
+    Método del codo automatizado para KMeans.
+    
+    Parámetros
+    ----------
+    X : array o DataFrame
+        Datos de entrada.
+    k_min : int
+        Número mínimo de clusters a probar (default=2).
+    k_cap : int
+        Máximo k a evaluar (se ajusta a n_samples-1 si es más grande).
+    scale : bool
+        Si True, escala los datos antes de aplicar KMeans.
+    scaler : str
+        "standard" (StandardScaler) o "minmax" (MinMaxScaler).
+    method : str
+        Método para elegir el codo: "absolute" o "relative".
+    palette : lista o None
+        Paleta de colores (ej. VIRIDIS).
+    seed : int
+        Semilla aleatoria para reproducibilidad.
+    show : bool
+        Si True, muestra el gráfico.
+    """
+    X_arr = np.asarray(X)
+    n_samples = X_arr.shape[0]
+
+    # Escalado opcional
+    if scale:
+        if scaler == "standard":
+            X_arr = StandardScaler().fit_transform(X_arr)
+        elif scaler == "minmax":
+            X_arr = MinMaxScaler().fit_transform(X_arr)
+
+    # Rango de k
+    k_max = max(k_min, min(k_cap, n_samples - 1))
+    k_values = list(range(k_min, k_max + 1))
+
+    # Inercias
+    inertias = []
+    for k in k_values:
+        km = KMeans(n_clusters=k, init="k-means++", n_init=10, random_state=seed)
+        km.fit(X_arr)
+        inertias.append(km.inertia_)
+
+    # Método del codo
+    if len(inertias) >= 2:
+        diffs = np.diff(inertias) * -1           # mejoras positivas
+        rel_diffs = diffs / np.array(inertias[:-1])
+        # Elegir el codo según método
+        if method == "relative":
+            elbow_idx = int(np.argmax(rel_diffs))
+        else:  # "absolute" por defecto
+            elbow_idx = int(np.argmax(diffs))
+        elbow_k = k_values[elbow_idx + 1]
+    else:
+        diffs = np.array([])
+        rel_diffs = np.array([])
+        elbow_k = k_values[0]
+
+
+    # Crear DataFrame
+    df_out = pd.DataFrame({
+        "k": k_values,
+        "inertia": inertias,
+        "delta_inertia": [np.nan] + diffs.tolist(),
+        "delta_relative": [np.nan] + rel_diffs.tolist(),
+        "method": method,
+        "scaled": scale,
+        "scaler": scaler
+    }).set_index("k")
+
+    df_out["is_elbow"] = df_out.index == elbow_k
+
+    # Paleta 
+    line_color = "black"
+    line_colordos= "black"
+    if palette is not None:
+        try:
+            line_color = palette[5]   # toma un color intermedio si existe
+            line_colordos= palette[0]
+        except Exception:
+            line_color = "black"
+            line_colordos= "black"
+    # Gráfico
+    if show:
+        vir = plt.cm.viridis
+        colors = vir(np.linspace(0, 1, len(k_values)))
+        colors2 = vir(np.linspace(0, 1, len(k_values)-1)) if len(k_values) > 1 else None
+
+        fig, ax1 = plt.subplots(figsize=(8,6))
+        # Inercia
+        ax1.plot(k_values, inertias, marker="o", color=line_color, label="Inercia total")
+        ax1.set_xlabel("Número de clusters (k)")
+        ax1.set_ylabel("Inercia (SSE)", color="black")
+        ax1.tick_params(axis="y", labelcolor="black")
+        ax1.grid(True, linestyle="--", alpha=0.4)
+        ax1.axvline(elbow_k, linestyle="--", alpha=0.6, color=line_colordos,
+                    label=f"Codo sugerido: k={elbow_k}")
+
+        # Deltas
+        ax2 = ax1.twinx()
+        if diffs.size:
+            ax2.bar(k_values[1:], diffs, color=colors2, alpha=0.25, label="Δ Inercia")
+        ax2.set_ylabel("Δ Inercia", color="black")
+        ax2.tick_params(axis="y", labelcolor="black")
+
+        # Leyenda
+        lines1, labs1 = ax1.get_legend_handles_labels()
+        lines2, labs2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labs1 + labs2, loc="best")
+
+        plt.title(f"Método del codo ({method}, scale={scale}, scaler={scaler})", fontsize=14, weight="bold")
+        plt.tight_layout()
+        plt.show()
+
+    return df_out, elbow_k
+def silhouette_auto_plot(X, k_min=2, k_cap=10, scale=True, scaler="standard",
+                         seed=42, palette=None, show=True):
+    """
+    Evalúa Silhouette vs k para KMeans y devuelve (df_resultados, best_k).
+
+    Parámetros
+    ------
+    X : array-like o DataFrame (solo numérico)
+    k_min : int, mínimo k a evaluar (>=2)
+    k_cap : int, máximo k a intentar (cap superior; se ajusta a n_samples-1)
+    scale : bool, si True escala X antes (recomendado para KMeans)
+    scaler : {"standard","minmax"}
+    seed : int, semilla de reproducibilidad
+    palette : lista o None, Paleta de colores (ej. VIRIDIS).
+    show : bool, si True grafica Silhouette vs k
+
+    Retorna
+    ------
+    df_out : DataFrame indexado por k con columnas:
+             ["silhouette", "n_clusters", "scaled", "scaler", "is_best"]
+    best_k : int, k con mayor coeficiente de silueta
+    """
+    # saneamiento básico
+    X_arr = np.asarray(X, dtype=float)
+    # quita filas con NaN/inf si existieran
+    mask = np.isfinite(X_arr).all(axis=1)
+    X_arr = X_arr[mask]
+    n_samples = X_arr.shape[0]
+
+    if n_samples < 3:
+        raise ValueError("Se requieren ≥3 muestras para calcular silueta.")
+
+    # escalado opcional
+    if scale:
+        if scaler == "standard":
+            X_arr = StandardScaler().fit_transform(X_arr)
+        elif scaler == "minmax":
+            X_arr = MinMaxScaler().fit_transform(X_arr)
+
+    # rango de k válido
+    k_max = max(k_min, min(k_cap, n_samples - 1))
+    if k_max < 2:
+        raise ValueError("Con tan pocas muestras no es posible evaluar k≥2.")
+    k_values = list(range(k_min, k_max + 1))
+
+    # cálculo de silueta
+    sil_scores = []
+    for k in k_values:
+        km = KMeans(n_clusters=k, init="k-means++", n_init=10, random_state=seed)
+        labels = km.fit_predict(X_arr)
+        # silueta válida solo si hay >1 cluster y ningún cluster vacío
+        if len(np.unique(labels)) > 1:
+            s = silhouette_score(X_arr, labels)
+        else:
+            s = np.nan
+        sil_scores.append(s)
+
+    # mejor k (ignorando NaN)
+    if np.all(np.isnan(sil_scores)):
+        best_k = k_values[0]
+    else:
+        best_idx = int(np.nanargmax(sil_scores))
+        best_k = k_values[best_idx]
+
+    # DataFrame de salida
+    df_out = pd.DataFrame({
+        "k": k_values,
+        "silhouette": sil_scores,
+        "n_clusters": k_values,
+        "scaled": scale,
+        "scaler": scaler
+    }).set_index("k")
+    df_out["is_best"] = df_out.index == best_k
+
+    # Paleta 
+    line_color = "black"
+    if palette is not None:
+        try:
+            line_color = palette[6]   
+        except Exception:
+            line_color = "black"
+    # gráfico opcional
+    if show:
+        colors = plt.cm.viridis(np.linspace(0, 1, len(k_values)))
+        plt.figure(figsize=(8,5))
+        plt.plot(k_values, sil_scores, marker="o", linewidth=1.5, color=line_color)
+        
+        # marca best_k
+        best_s = df_out.loc[best_k, "silhouette"]
+        if np.isfinite(best_s):
+            plt.scatter(best_k, best_s, s=220, marker="X",
+                        edgecolors="k", linewidths=2, color="red",
+                        label=f"Mejor k: {best_k} (s={best_s:.3f})")
+        plt.title(f"Silueta vs k (scale={scale}, scaler={scaler})",
+                  fontsize=14, weight="bold")
+        plt.xlabel("Número de clusters (k)")
+        plt.ylabel("Silueta (−1 a 1)")
+        plt.grid(True, linestyle="--", alpha=0.4)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    return df_out, best_k
